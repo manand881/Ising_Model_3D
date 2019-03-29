@@ -138,14 +138,15 @@ def pick_random(ran0):
 #   End of function
 
 
-# def magnetization_calc(output_count,magnetization,magnetization_ave,magnetization2_ave,energy,nlayers,iterator,iterator2):
-#             output_count+=1
-#             magnetization = numpy.sum(a[0:nlayers,1:iterator-2,1:iterator-2])/(nlayers*iterator*iterator2*1.0)
-#             magnetization_ave = magnetization_ave + magnetization
-#             magnetization2_ave = magnetization2_ave + magnetization**2
-#             energy = 0.00
 
-#             return output_count,magnetization,magnetization_ave,magnetization2_ave,energy
+#   Function to obtain magnetization value
+
+@jit(nopython=True)
+def magnetization_sum(iterator,iterator2,a):
+    return numpy.sum(a[0:nlayers,1:iterator-2,1:iterator-2])/(nlayers*iterator*iterator2*1.0)
+
+#   End of function
+
 
 
 spin_attribute = open("spin_array_attribute.csv", "w")
@@ -154,7 +155,7 @@ spin_attribute.write("\nnumber of columns   :"+str(ncols))
 spin_attribute.write("\nnumber of layers    :"+str(nlayers))
 
 
-nscans=int((high_temp-low_temp)/temp_interval+1)        #   Determining the number of scans
+nscans=int((high_temp-low_temp)/temp_interval+1)            #   Determining the number of scans
 
 spin_attribute.write("\nnumber of scans     :"+str(nscans))
 spin_attribute.write("\n2")
@@ -178,7 +179,7 @@ energy_writer=csv.writer(energyObj)
 
 
 
-#   Section for choosing Configtype
+    #   Section for choosing Configtype
 
 
 
@@ -246,14 +247,14 @@ for iscan in range(1,nscans+1):                                         #   Main
     temp = float(round((high_temp - temp_interval*(iscan-1)), 3))       #   rounding off to two decimal places for optimisation purposes 
     print("Running Program for Temperature : "+str(temp)+"\n")
     
-    beta  =  1.0/temp
+    beta  =  1.0/temp                           #   Reseting variables to initial values
     output_count   =   0
     energy_ave  =  0.0
     energy2_ave  =  0.0
     magnetization_ave  =  0.0
     magnetization2_ave  =  0.0
     
-    a=start_matrix
+    a=start_matrix                              #   Reseting matrix a to initial congiguration
 
     #   Main loop containing Monte Carlo algorithm
 
@@ -262,7 +263,9 @@ for iscan in range(1,nscans+1):                                         #   Main
         if(ipass>nequil):
            
             output_count+=1
-            magnetization = numpy.sum(a[0:nlayers,1:iterator-2,1:iterator-2])/(nlayers*iterator*iterator2*1.0)
+            # magnetization = numpy.sum(a[0:nlayers,1:iterator-2,1:iterator-2])/(nlayers*iterator*iterator2*1.0)
+            
+            magnetization = magnetization_sum(iterator,iterator2,a)     #   Calling magnetization summing function 
             magnetization_ave = magnetization_ave + magnetization
             magnetization2_ave = magnetization2_ave + magnetization**2
             energy = 0.00
@@ -270,12 +273,12 @@ for iscan in range(1,nscans+1):                                         #   Main
             for k in range(0,nlayers):              #   Depth
                 for i in range(0,iterator):         #   Row
                     for j in range(0,iterator2):    #   Column
-                   
-                        if(d!=0 or d!=nlayers-1):   #   When the matrix element is not on the top or bottom layer
+
+                        if(d!=0 and d!=(nlayers-1)):    #   When the matrix element is not on the top or bottom layer
                             energy = energy - a[d,m,n]*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d+1,m,n]+a[d-1,m,n])
-                        elif(d==0):                 #   When the matrix element is on the bottom layer
+                        elif(d==0):                     #   When the matrix element is on the bottom layer
                             energy = energy - a[d,m,n]*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d+1,m,n])
-                        else:                       #   When the matrix element is on the top layer
+                        else:                           #   When the matrix element is on the top layer
                             energy = energy - a[d,m,n]*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d-1,m,n])
 
 
@@ -284,18 +287,18 @@ for iscan in range(1,nscans+1):                                         #   Main
             energy2_ave = energy2_ave + energy**2
 
         ran0=pick_random(ran0) 
-        m=int((iterator-2)*ran0)  
+        m=int((iterator-2)*ran0)                    #   Picking random spin row number
         ran0=pick_random(ran0)
-        n=int((iterator2-2)*ran0)
+        n=int((iterator2-2)*ran0)                   #   Picking random spin column number
         ran0=pick_random(ran0)
-        d=int((nlayers-1)*ran0)
+        d=int((nlayers)*ran0)                       #   Picking random spin depth number
         trial_spin=-1*(a[d,m,n]) 
 
-        if(d!=0 or d!=nlayers-1):   #   When the matrix element is not on the top or bottom layer
+        if(d!=0 and d!=(nlayers-1)):    #   When the matrix element is not on the top or bottom layer
             DeltaU = -1*(trial_spin*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d+1,m,n]+a[d-1,m,n])*2)
-        elif(d==0):                 #   When the matrix element is on the bottom layer
+        elif(d==0):                     #   When the matrix element is on the bottom layer
             DeltaU = -1*(trial_spin*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d+1,m,n])*2)
-        else:                       #   When the matrix element is on the top layer
+        else:                           #   When the matrix element is on the top layer
             DeltaU = -1*(trial_spin*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d-1,m,n])*2)
         
         ran0=pick_random(ran0)
@@ -335,12 +338,12 @@ for iscan in range(1,nscans+1):                                         #   Main
 
 print("\nProgram Completed\n")
 
-spin.close()                                            #   Closing open files.This part is important as open files may not allow writing of new data
+spin.close()                                         #   Closing open files.This part is important as open files may not allow writing of new data
 magnet.close()
 energyObj.close()
 
 Profiler = open("Program_Profile.csv","a+")
-time_elapsed=(time.perf_counter()-time_start)           #   Program execuion time profiler
+time_elapsed=(time.perf_counter()-time_start)        #   Program execuion time profiler
 Profiler.write("\n"+str(time_elapsed)+"")
 Profiler.close()
 
