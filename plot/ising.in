@@ -1,0 +1,21 @@
+nrows - number of rows of spins (even number)
+20
+ncols - number of columns of spins (even number)
+20
+nlayers - number of layers in the quasi 3D Matrix
+3
+npass - number of passes for each temperature
+6000
+nequil - number of equilibration steps for each temperature
+4000
+high_temp - temperature to start scan at
+4.0
+low_temp - temperature to finish scan at
+0.92
+temp_interval - scanning interval
+0.01
+ConfigType - 1: checkerboard, 2: interface, 3: unequal interface, 4: Random Matrix
+1
+MovieOn - set to .true. when running for 1 temp to make movie
+.false.
+End of file.
