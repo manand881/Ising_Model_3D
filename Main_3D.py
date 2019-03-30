@@ -7,6 +7,7 @@
 #   Numba has been installed and used in this project.
 #   Tools used: Visual Studio Code, GitHub Desktop.
 
+from input_param_reader import ising_input
 from numba import jit
 
 import random
@@ -61,49 +62,11 @@ print("MONTE CARLO QUASI 3D ISING MODEL\n")
 print("Monte Carlo Statistics for Quasi 3D Ising Model with periodic boundary conditions\n")
 print("The critical temperature is approximately 2.3, as seen on Chandler p. 123.\n")
 
-ising = open("ising.in", "r")       #   This section is for reading input parameters and assigning it to global variables
-                                       
-next(ising)
-stringreader=(ising.readline())
-nrows=int(stringreader)
+#   This section is for reading input parameters and assigning it to global variables
 
-next(ising)
-stringreader=(ising.readline())
-ncols=int(stringreader)
+nrows, ncols, nlayers, npass, nequil, high_temp, low_temp, temp_interval, ConfigType=ising_input()
 
-next(ising)
-stringreader=(ising.readline())
-nlayers=int(stringreader)
-
-next(ising)
-stringreader=(ising.readline())
-npass=int(stringreader)
-
-next(ising)
-stringreader=(ising.readline())
-nequil=int(stringreader)
-
-next(ising)
-stringreader=(ising.readline())
-high_temp=float(stringreader)
-
-next(ising)
-stringreader=(ising.readline())
-low_temp=float(stringreader)
-
-next(ising)
-stringreader=(ising.readline())
-temp_interval=float(stringreader)
-
-next(ising)
-stringreader=(ising.readline())
-ConfigType=int(stringreader)
-
-ising.close()
-
-
-
-# End of input parameter reader section
+#   End of input parameter reader section
 
 iterator = nrows
 iterator2 = ncols
@@ -142,7 +105,7 @@ def pick_random(ran0):
 #   Function to obtain magnetization value
 
 @jit(nopython=True)
-def magnetization_sum(iterator,iterator2,a):
+def magnetization_sum(nlayers,iterator,iterator2,a):
     return numpy.sum(a[0:nlayers,1:iterator-2,1:iterator-2])/(nlayers*iterator*iterator2*1.0)
 
 #   End of function
@@ -153,7 +116,6 @@ spin_attribute = open("spin_array_attribute.csv", "w")
 spin_attribute.write("number of rows        :"+str(nrows))
 spin_attribute.write("\nnumber of columns   :"+str(ncols))
 spin_attribute.write("\nnumber of layers    :"+str(nlayers))
-
 
 nscans=int((high_temp-low_temp)/temp_interval+1)            #   Determining the number of scans
 
@@ -179,7 +141,7 @@ energy_writer=csv.writer(energyObj)
 
 
 
-    #   Section for choosing Configtype
+#   Section for choosing Configtype
 
 
 
@@ -265,7 +227,7 @@ for iscan in range(1,nscans+1):                                         #   Main
             output_count+=1
             # magnetization = numpy.sum(a[0:nlayers,1:iterator-2,1:iterator-2])/(nlayers*iterator*iterator2*1.0)
             
-            magnetization = magnetization_sum(iterator,iterator2,a)     #   Calling magnetization summing function 
+            magnetization = magnetization_sum(nlayers, iterator, iterator2, a)     #   Calling magnetization summing function 
             magnetization_ave = magnetization_ave + magnetization
             magnetization2_ave = magnetization2_ave + magnetization**2
             energy = 0.00
@@ -320,7 +282,11 @@ for iscan in range(1,nscans+1):                                         #   Main
             if(n==iterator2-1):                
                 a[d,m,0]=trial_spin
     
+
+
     #   End Monte carlo pases
+
+
 
     for k in range(0,nlayers):                      #   Depth
         for i in range(0,iterator):                 #   Rows
