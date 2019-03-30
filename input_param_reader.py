@@ -4,9 +4,9 @@ def ising_input():
     
     ncols = 20              #  number of columns of spins (even number)
 
-    npass = 15500           #  number of passes for each temperature
-
     nlayers = 3             #  number of layers in the quasi 3D Matrix
+
+    npass = 15500           #  number of passes for each temperature
 
     nequil = 13000          #  number of equilibration steps for each temperature
 
