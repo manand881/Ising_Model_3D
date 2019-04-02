@@ -1,0 +1,8 @@
+Number of Rows          :20
+Number of Columns       :20
+Value of npass          :60000
+Value of nequil         :40000
+Value of high_temp      :5.0
+Value of low_temp       :0.92
+Value of temp_interval  :0.01
+ConfigType              :1

@@ -7,14 +7,18 @@
 #   Numba has been installed and used in this project.
 #   Tools used: Visual Studio Code, GitHub Desktop.
 
-from input_param_reader import ising_input
-from numba import jit
+from Input_param_reader     import Ising_input      #   Python Function in the same directory as the Main.py File
+from Montecarlo             import Monte_Carlo      #   Python Function in the same directory as the Main.py File
+from numba                  import jit              #   Python Package to be downloaded manually 
+from Path                   import Output_Path_Set  #   Python Function to create output folder by date and time and set it as working directory
 
 import random
 import numpy
 import time
 import math
 import csv
+import os
+
 
 
 time_start = time.perf_counter()    #   For Program Runtime Profiling. Time.clock() has been depreciated 
@@ -64,21 +68,23 @@ print("The critical temperature is approximately 2.3, as seen on Chandler p. 123
 
 #   This section is for reading input parameters and assigning it to global variables
 
-nrows, ncols, nlayers, npass, nequil, high_temp, low_temp, temp_interval, ConfigType=ising_input()
+nrows, ncols, nlayers, npass, nequil, high_temp, low_temp, temp_interval, ConfigType=Ising_input()
 
 #   End of input parameter reader section
 
-iterator = nrows
-iterator2 = ncols
+iterator = nrows        #   Setting iterator to be used as number of rows value
+iterator2 = ncols       #   Setting iterator to be used as number of columns value
 
 if(nrows%2!=0):
     iterator+=1
 if(ncols%2!=0):
     iterator2+=1
 
-print("Running program for %d rows and %d columns\n" % (iterator,iterator2))
+print("Running program for %d rows, %d columns and %d layers\n" % (iterator,iterator2,nlayers))
 
 #   Matrix arrays are stored as a[depth,row,column] manner in Numpy
+
+
 
 a=numpy.ones((nlayers,iterator,iterator2),dtype=int)
 start_matrix=numpy.ones((nlayers,iterator,iterator2),dtype=int)
@@ -106,10 +112,25 @@ def pick_random(ran0):
 
 @jit(nopython=True)
 def magnetization_sum(nlayers,iterator,iterator2,a):
-    return numpy.sum(a[0:nlayers,1:iterator-2,1:iterator-2])/(nlayers*iterator*iterator2*1.0)
+    return numpy.sum(a[0:nlayers,1:iterator-1,1:iterator-1])/(nlayers*iterator*iterator2*1.0)
 
 #   End of function
 
+
+
+path=Output_Path_Set()
+
+
+input_config=open("Input_Config.csv","w+")                                #   To write input configuration to output folder in a seperate file for future use.
+input_config.write("Number of Rows          :"+str(nrows))              
+input_config.write("\nNumber of Columns       :"+str(ncols))
+input_config.write("\nValue of npass          :"+str(npass))
+input_config.write("\nValue of nequil         :"+str(nequil))
+input_config.write("\nValue of high_temp      :"+str(high_temp))
+input_config.write("\nValue of low_temp       :"+str(low_temp))
+input_config.write("\nValue of temp_interval  :"+str(temp_interval))
+input_config.write("\nConfigType              :"+str(ConfigType))
+input_config.close()
 
 
 spin_attribute = open("spin_array_attribute.csv", "w")
@@ -219,71 +240,9 @@ for iscan in range(1,nscans+1):                                         #   Main
     a=start_matrix                              #   Reseting matrix a to initial congiguration
 
     #   Main loop containing Monte Carlo algorithm
-
-    for ipass in range(0,npass+1):
-        
-        if(ipass>nequil):
-           
-            output_count+=1
-            # magnetization = numpy.sum(a[0:nlayers,1:iterator-2,1:iterator-2])/(nlayers*iterator*iterator2*1.0)
-            
-            magnetization = magnetization_sum(nlayers, iterator, iterator2, a)     #   Calling magnetization summing function 
-            magnetization_ave = magnetization_ave + magnetization
-            magnetization2_ave = magnetization2_ave + magnetization**2
-            energy = 0.00
-
-            for k in range(0,nlayers):              #   Depth
-                for i in range(0,iterator):         #   Row
-                    for j in range(0,iterator2):    #   Column
-
-                        if(d!=0 and d!=(nlayers-1)):    #   When the matrix element is not on the top or bottom layer
-                            energy = energy - a[d,m,n]*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d+1,m,n]+a[d-1,m,n])
-                        elif(d==0):                     #   When the matrix element is on the bottom layer
-                            energy = energy - a[d,m,n]*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d+1,m,n])
-                        else:                           #   When the matrix element is on the top layer
-                            energy = energy - a[d,m,n]*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d-1,m,n])
-
-
-            energy = energy / (nlayers*iterator*iterator2*2.0)
-            energy_ave = energy_ave + energy
-            energy2_ave = energy2_ave + energy**2
-
-        ran0=pick_random(ran0) 
-        m=int((iterator-2)*ran0)                    #   Picking random spin row number
-        ran0=pick_random(ran0)
-        n=int((iterator2-2)*ran0)                   #   Picking random spin column number
-        ran0=pick_random(ran0)
-        d=int((nlayers)*ran0)                       #   Picking random spin depth number
-        trial_spin=-1*(a[d,m,n]) 
-
-        if(d!=0 and d!=(nlayers-1)):    #   When the matrix element is not on the top or bottom layer
-            DeltaU = -1*(trial_spin*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d+1,m,n]+a[d-1,m,n])*2)
-        elif(d==0):                     #   When the matrix element is on the bottom layer
-            DeltaU = -1*(trial_spin*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d+1,m,n])*2)
-        else:                           #   When the matrix element is on the top layer
-            DeltaU = -1*(trial_spin*(a[d,m-1,n]+a[d,m+1,n]+a[d,m,n-1]+a[d,m,n+1]+a[d-1,m,n])*2)
-        
-        ran0=pick_random(ran0)
-        log_eta=math.log(ran0+(1e-10))
-        
-        if(-beta*DeltaU>log_eta):
-            
-            a[d,m,n]=trial_spin
-
-            if(m==1):
-                a[d,iterator-1,n]=trial_spin
-            
-            if(m==iterator-1):
-                a[d,0,n]=trial_spin
-            
-            if(n==1):
-                a[d,m,iterator2-1]=trial_spin
-            
-            if(n==iterator2-1):                
-                a[d,m,0]=trial_spin
     
-
-
+    m , n , d , i , j , k , ipass , npass , nequil , iterator , iterator2 , nlayers , ran0 , a , magnetization , magnetization_ave , magnetization2_ave , energy , beta , DeltaU , output_count , energy_ave , energy2_ave = Monte_Carlo( m , n , d , i , j , k , ipass , npass , nequil , iterator , iterator2 , nlayers , ran0 , a , magnetization , magnetization_ave , magnetization2_ave , energy , beta , DeltaU , output_count,energy_ave,energy2_ave )
+    
     #   End Monte carlo pases
 
 
@@ -302,7 +261,7 @@ for iscan in range(1,nscans+1):                                         #   Main
 
 #   End Scan Loop
 
-print("\nProgram Completed\n")
+print("\nProgram completed.\n\nOpen folder",path,"to view output.\n\n")
 
 spin.close()                                         #   Closing open files.This part is important as open files may not allow writing of new data
 magnet.close()
@@ -310,7 +269,8 @@ energyObj.close()
 
 Profiler = open("Program_Profile.csv","a+")
 time_elapsed=(time.perf_counter()-time_start)        #   Program execuion time profiler
-Profiler.write("\n"+str(time_elapsed)+"")
+time_elapsed=round(time_elapsed,5)
+Profiler.write("\nProgram FInished running in "+str(time_elapsed)+" Seconds on "+str(time.ctime()))
 Profiler.close()
 
 #   THE END
