@@ -57,7 +57,6 @@ energy_ave=0            #   cumulative average of energy
 energy2_ave=0           #   cumulative average of energy squared
 output_count=0          #   Number of times things have been added to averages
 ran0=0                  #   T B C
-stringreader=""         #   variable to read files from text to be later converted to int
 iterator=0              #   to be used with for loop / dummy operation
 iterator2=0             #   to be used  for loop / dummy operations
 
