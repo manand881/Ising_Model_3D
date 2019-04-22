@@ -86,7 +86,7 @@ print("Running program for %d rows, %d columns and %d layers\n" % (iterator,iter
 
 
 a=numpy.ones((nlayers,iterator,iterator2),dtype=int)
-start_matrix=numpy.ones((nlayers,iterator,iterator2),dtype=int)
+start_matrix=a
 
 
 
@@ -96,7 +96,7 @@ start_matrix=numpy.ones((nlayers,iterator,iterator2),dtype=int)
 
 #   Function to generate uniform random numbers
 
-@jit(parallel=True)
+@jit(nopython=True)
 def pick_random(ran0):
     
     ran0=round(random.uniform(0,1),12)
@@ -105,8 +105,6 @@ def pick_random(ran0):
 
 #   End of function
 
-
-
 #   Function to obtain magnetization value
 
 @jit(nopython=True)
@@ -114,8 +112,6 @@ def magnetization_sum(nlayers,iterator,iterator2,a):
     return numpy.sum(a[0:nlayers,1:iterator-1,1:iterator-1])/(nlayers*iterator*iterator2*1.0)
 
 #   End of function
-
-
 
 path=Output_Path_Set()
 

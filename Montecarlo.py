@@ -15,6 +15,14 @@ def pick_random(ran0):
 
 #   End of function
 
+def magnetization_sum(nlayers,iterator,iterator2,start_matrix,magnetization_sumer):
+    magnetization_sumer=0
+    for k in range(0,nlayers):                      #   Depth
+        for i in range(1,iterator):                 #   Rows
+            for j in range(1,iterator2):            #   Columns
+                magnetization+=start_matrix[k,i,j]
+    print(magnetization_sumer)    
+
 #   Function to perfrom Montecarlo loop
 
 @jit(nopython=True)
