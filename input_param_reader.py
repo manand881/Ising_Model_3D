@@ -6,11 +6,11 @@ def Ising_input():
 
     nlayers = 3             #  number of layers in the quasi 3D Matrix
 
-    npass = 60000           #  number of passes for each temperature
+    npass = 600000          #  number of passes for each temperature
 
-    nequil = 40000          #  number of equilibration steps for each temperature
+    nequil = 450000         #  number of equilibration steps for each temperature
 
-    high_temp = 5.0         #  temperature to start scan at
+    high_temp = 5.92        #  temperature to start scan at
 
     low_temp = 0.92         #  temperature to finish scan at
 
